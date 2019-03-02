@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        .box1,
+        .box2 {
+            width: 600px;
+            height: 600px;
+            border: 1px solid black;
+            display: inline-block;
+            margin-top: 50px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="box1"></div>
+    <div class="box2"></div>
+
+    <script src="./jquery.js"></script>
+    <script src="echarts.js"></script>
+    <script>
+        var barChart = echarts.init($('.box1')[0]);
+        var pieChart = echarts.init($('.box2')[0]);
+
+
+        getData('./data.txt');
+        function getData(url) {
+            $.ajax({
+                type: 'GET',
+                url: url,
+                success: function (data) {
+                    // console.log(JSON.parse(data));
+                    var data = JSON.parse(data);
+                    var sortData = data.sort(compare('num'));
+                    getBar(sortData);
+                },
+                error: function () {
+                    console.log('error');
+                }
+
+            })
+        }
+        function compare(pro) {
+            return function (a, b) {
+                return a[pro] - b[pro];
+            }
+        }
+        function getBar(data) {
+            var option = {
+                title: {
+                    text: '2016~2018年度总销量',
+                    subtext: '某服装公司'
+                },
+                legend: {
+                    data: ['销量']
+                },
+                xAxis:
+                {
+                    type: 'category',
+                    data: []
+                },
+
+                yAxis: {},
+                series: [
+                    {
+                        name: '销量',
+                        type: 'bar',
+                        data: [],
+                    }
+                ]
+            };
+            data.forEach(function (ele, index) {
+                option.xAxis.data[index] = ele.name;
+                option.series[0].data[index] = ele.num;
+            });
+            barChart.setOption(option);
+            barChart.on('click', function (params) {
+                console.log(params.dataIndex)
+                getPie(params, data);
+            })
+        }
+        function getPie(params, data) {
+            console.log(data[params.dataIndex])
+            var option = {
+                title: {
+                    text: '每年具体销量',
+                    x: 'center'
+                },
+                tooltip: {
+                    trigger: 'item',
+                    formatter: "{a} <br/>{b} : {c} ({d}%)"
+                },
+                legend: {
+                    orient: 'vertical',
+                    left: 'left',
+                    data: []
+                },
+                series: [
+                    {
+                        name: '年度销量',
+                        type: 'pie',
+                        radius: '55%',
+                        center: ['50%', '60%'],
+                        data: [],
+                        label: {
+                            textStyle: {
+                                color: 'rgb(0,0,0)'
+                            }
+                        },
+                        lableLine: {
+                            normal: {
+                                lineStyle: {
+                                    color: 'rgb(0,0,0)'
+                                },
+                            },
+                        }
+                    }
+                ]
+            }
+            var pieData = data[params.dataIndex].year;
+            pieData.forEach(function (ele, index) {
+                var obj = {};
+                obj.name = ele.y;
+                obj.value = ele.num;
+                option.legend.data.push(ele.y);
+                option.series[0].data.push(obj);
+            })
+            pieChart.setOption(option);
+        }        
+    </script>
+</body>
+
+</html>
